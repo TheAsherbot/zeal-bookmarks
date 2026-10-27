@@ -3,6 +3,8 @@
 
 #include "application.h"
 
+#include "bookmarkmanager.h"
+
 #include "extractor.h"
 #include "filemanager.h"
 #include "httpserver.h"
@@ -48,6 +50,7 @@ Application::Application(quint16 httpServerPort, QObject *parent)
     m_networkManager = new NetworkAccessManager(this);
 
     m_fileManager = new FileManager(this);
+    m_bookmarkManager = new BookmarkManager(this);
     FileManager::removePendingDeletions(m_settings->docsetPath);
     m_httpServer = new HttpServer(httpServerPort, this);
 
@@ -109,6 +112,11 @@ Session *Application::session() const
 Settings *Application::settings() const
 {
     return m_settings;
+}
+
+BookmarkManager *Application::bookmarkManager() const
+{
+    return m_bookmarkManager;
 }
 
 Registry::DocsetRegistry *Application::docsetRegistry() const

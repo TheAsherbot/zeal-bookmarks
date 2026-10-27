@@ -15,6 +15,7 @@ class QMenuBar;
 class QSplitter;
 class QStackedWidget;
 class QTabBar;
+class QTabWidget;
 
 namespace Zeal {
 
@@ -33,6 +34,7 @@ class SearchQuery;
 
 namespace WidgetUi {
 
+class BookmarkSidebar;
 class BrowserTab;
 class SidebarViewProvider;
 
@@ -67,6 +69,9 @@ private:
     void duplicateTab(int index);
 
     void setupMainMenu();
+    void setupBookmarksMenu();
+    void addCurrentTabToBookmarks();
+    void updateBookmarksMenu();
     void setupShortcuts();
     void setupTabBar();
 
@@ -94,6 +99,10 @@ private:
     QAction *m_showDocsetManagerAction = nullptr;
     QAction *m_showPreferencesAction = nullptr;
     QAction *m_showSidebarAction = nullptr;
+    QAction *m_addBookmarkAction = nullptr;
+    QMenu *m_bookmarksMenu = nullptr;
+    BookmarkSidebar *m_bookmarkSidebar = nullptr;
+    QTabWidget *m_sidebarTabWidget = nullptr;
 #ifndef Q_OS_MACOS
     QAction *m_showMenuBarAction = nullptr;
 #endif

@@ -1,6 +1,7 @@
 add_library(Core STATIC
     application.cpp
     applicationsingleton.cpp
+    bookmarkmanager.cpp
     extractor.cpp
     filemanager.cpp
     httpserver.cpp

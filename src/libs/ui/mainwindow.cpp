@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 
 #include "aboutdialog.h"
+#include "bookmarksidebar.h"
 #include "browsertab.h"
 #include "docsetsdialog.h"
 #include "searchsidebar.h"
@@ -17,6 +18,7 @@
 #include <browser/webbridge.h>
 #include <browser/webcontrol.h>
 #include <core/application.h>
+#include <core/bookmarkmanager.h>
 #include <core/session.h>
 #include <core/settings.h>
 #include <qxtglobalshortcut/qxtglobalshortcut.h>
@@ -30,6 +32,7 @@
 #include <QFocusEvent>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QStyle>
 #include <QKeyEvent>
 #include <QMenuBar>
 #include <QMouseEvent>
@@ -87,10 +90,27 @@ MainWindow::MainWindow(Core::Application *app, QWidget *parent)
     auto *sb = new Sidebar::Container();
     sb->addView(sbView);
 
+    m_sidebarTabWidget = new QTabWidget();
+    m_sidebarTabWidget->setDocumentMode(true);
+    m_sidebarTabWidget->setTabBarAutoHide(false);
+    m_sidebarTabWidget->addTab(sb, QApplication::style()->standardIcon(QStyle::SP_DirIcon), tr("Docsets"));
+
+    m_bookmarkSidebar = new BookmarkSidebar(this);
+    connect(m_bookmarkSidebar, &BookmarkSidebar::navigationRequested, this, [this](const QUrl &url) {
+        if (auto *tab = currentTab()) {
+            tab->webControl()->load(url);
+            tab->webControl()->focus();
+        }
+    });
+    connect(m_bookmarkSidebar, &BookmarkSidebar::openInNewTabRequested, this, [this](const QUrl &url, bool activate) {
+        createTab(url, activate);
+    });
+    m_sidebarTabWidget->addTab(m_bookmarkSidebar, QApplication::style()->standardIcon(QStyle::SP_FileIcon), tr("Bookmarks"));
+
     // Setup splitter.
-    m_splitter->insertWidget(0, sb);
+    m_splitter->insertWidget(0, m_sidebarTabWidget);
     m_splitter->restoreState(windowState.splitterState);
-    sb->setVisible(m_showSidebarAction->isChecked());
+    m_sidebarTabWidget->setVisible(m_showSidebarAction->isChecked());
 
     // Setup web settings.
     new Browser::Settings(m_settings, this);
@@ -559,6 +579,9 @@ void MainWindow::setupMainMenu()
         }
     });
 
+    // Bookmarks Menu.
+    setupBookmarksMenu();
+
     // Help Menu.
     menu = m_menuBar->addMenu(tr("&Help"));
 
@@ -827,6 +850,112 @@ void MainWindow::toggleWindow()
             hide();
         } else {
             showMinimized();
+        }
+    }
+}
+
+void MainWindow::setupBookmarksMenu()
+{
+    m_bookmarksMenu = m_menuBar->addMenu(tr("&Bookmarks"));
+
+    // Add Bookmark Action (Ctrl+D)
+    m_addBookmarkAction = m_bookmarksMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_DialogYesButton),
+                                                     tr("&Bookmark Current Page"));
+    addAction(m_addBookmarkAction);
+    m_addBookmarkAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+D")));
+    connect(m_addBookmarkAction, &QAction::triggered, this, &MainWindow::addCurrentTabToBookmarks);
+
+    // Show Bookmarks Sidebar
+    auto *showBookmarksAction = m_bookmarksMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon),
+                                                           tr("Show &Bookmarks Tab"));
+    addAction(showBookmarksAction);
+    showBookmarksAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+Shift+B")));
+    connect(showBookmarksAction, &QAction::triggered, this, [this]() {
+        if (m_sidebarTabWidget) {
+            m_sidebarTabWidget->setCurrentWidget(m_bookmarkSidebar);
+            if (auto *sb = m_splitter->widget(0)) {
+                sb->setVisible(true);
+            }
+        }
+    });
+
+    m_bookmarksMenu->addSeparator();
+
+    connect(m_bookmarksMenu, &QMenu::aboutToShow, this, &MainWindow::updateBookmarksMenu);
+}
+
+void MainWindow::updateBookmarksMenu()
+{
+    const auto actions = m_bookmarksMenu->actions();
+    for (int i = 3; i < actions.size(); ++i) {
+        m_bookmarksMenu->removeAction(actions[i]);
+    }
+
+    auto *bm = Core::BookmarkManager::instance();
+    if (!bm) {
+        return;
+    }
+
+    const auto &bookmarks = bm->bookmarks();
+    if (bookmarks.isEmpty()) {
+        auto *emptyAction = m_bookmarksMenu->addAction(tr("(No bookmarks yet)"));
+        emptyAction->setEnabled(false);
+        return;
+    }
+
+    // Group by docset
+    QMap<QString, QList<Core::BookmarkItem>> groups;
+    for (const auto &item : bookmarks) {
+        groups[item.docsetName].append(item);
+    }
+
+    for (auto it = groups.cbegin(); it != groups.cend(); ++it) {
+        const QString &docsetName = it.key();
+        const QList<Core::BookmarkItem> &items = it.value();
+
+        auto *sub = m_bookmarksMenu->addMenu(QApplication::style()->standardIcon(QStyle::SP_DirIcon),
+                                             QStringLiteral("%1 (%2)").arg(docsetName).arg(items.size()));
+        for (const auto &item : items) {
+            const QUrl url = item.url;
+            auto *bAct = sub->addAction(QApplication::style()->standardIcon(QStyle::SP_FileIcon), item.title);
+            connect(bAct, &QAction::triggered, this, [this, url]() {
+                if (auto *tab = currentTab()) {
+                    tab->webControl()->load(Core::BookmarkManager::resolveUrl(url));
+                    tab->webControl()->focus();
+                }
+            });
+        }
+    }
+}
+
+void MainWindow::addCurrentTabToBookmarks()
+{
+    auto *tab = currentTab();
+    if (!tab) {
+        return;
+    }
+
+    const QUrl url = tab->webControl()->url();
+    if (url.isEmpty()) {
+        return;
+    }
+
+    QString title = tab->webControl()->title();
+    if (title.isEmpty()) {
+        title = url.fileName();
+    }
+
+    auto *bm = Core::BookmarkManager::instance();
+    if (!bm) {
+        return;
+    }
+
+    bm->addBookmark(title, url);
+
+    if (m_sidebarTabWidget) {
+        m_sidebarTabWidget->setCurrentWidget(m_bookmarkSidebar);
+        if (auto *sb = m_splitter->widget(0)) {
+            sb->setVisible(true);
         }
     }
 }

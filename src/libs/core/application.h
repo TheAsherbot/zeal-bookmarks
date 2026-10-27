@@ -19,6 +19,7 @@ class DocsetRegistry;
 
 namespace Core {
 
+class BookmarkManager;
 class Extractor;
 class FileManager;
 class HttpServer;
@@ -38,6 +39,7 @@ public:
     QNetworkAccessManager *networkManager() const;
     Session *session() const;
     Settings *settings() const;
+    BookmarkManager *bookmarkManager() const;
 
     Registry::DocsetRegistry *docsetRegistry() const;
     FileManager *fileManager() const;
@@ -65,6 +67,7 @@ private:
 
     Session *m_session = nullptr;
     Settings *m_settings = nullptr;
+    BookmarkManager *m_bookmarkManager = nullptr;
 
     QNetworkAccessManager *m_networkManager = nullptr;
 

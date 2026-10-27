@@ -44,3 +44,6 @@ CMakeUserPresets.json
 
 # DotENV
 .env
+run_zeal.bat
+install_to_program_files.bat
+install.ps1

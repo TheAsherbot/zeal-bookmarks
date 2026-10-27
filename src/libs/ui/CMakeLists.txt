@@ -8,6 +8,7 @@ set(Ui_FORMS
 
 add_library(Ui STATIC
     aboutdialog.cpp
+    bookmarksidebar.cpp
     browsertab.cpp
     docsetlistitemdelegate.cpp
     docsetsdialog.cpp
