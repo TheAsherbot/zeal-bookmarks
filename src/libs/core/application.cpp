@@ -4,7 +4,6 @@
 #include "application.h"
 
 #include "bookmarkmanager.h"
-
 #include "extractor.h"
 #include "filemanager.h"
 #include "httpserver.h"

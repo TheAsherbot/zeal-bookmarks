@@ -32,13 +32,13 @@
 #include <QFocusEvent>
 #include <QGuiApplication>
 #include <QIcon>
-#include <QStyle>
 #include <QKeyEvent>
 #include <QMenuBar>
 #include <QMouseEvent>
 #include <QShortcut>
 #include <QSplitter>
 #include <QStackedWidget>
+#include <QStyle>
 #include <QTabBar>
 #include <QTextDocument>
 #include <QTimer>
@@ -105,7 +105,9 @@ MainWindow::MainWindow(Core::Application *app, QWidget *parent)
     connect(m_bookmarkSidebar, &BookmarkSidebar::openInNewTabRequested, this, [this](const QUrl &url, bool activate) {
         createTab(url, activate);
     });
-    m_sidebarTabWidget->addTab(m_bookmarkSidebar, QApplication::style()->standardIcon(QStyle::SP_FileIcon), tr("Bookmarks"));
+    m_sidebarTabWidget->addTab(m_bookmarkSidebar,
+                               QApplication::style()->standardIcon(QStyle::SP_FileIcon),
+                               tr("Bookmarks"));
 
     // Setup splitter.
     m_splitter->insertWidget(0, m_sidebarTabWidget);

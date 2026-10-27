@@ -12,15 +12,14 @@
 
 namespace Zeal::Core {
 
-struct BookmarkItem {
+struct BookmarkItem
+{
     QString title;
     QUrl url;
     QString docsetName;
     QDateTime dateAdded;
 
-    bool operator==(const BookmarkItem &other) const {
-        return url == other.url;
-    }
+    bool operator==(const BookmarkItem &other) const { return url == other.url; }
 };
 
 class BookmarkManager final : public QObject

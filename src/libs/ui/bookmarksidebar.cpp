@@ -112,15 +112,18 @@ void BookmarkSidebar::reloadBookmarks()
             auto *childItem = new QTreeWidgetItem(groupItem);
             childItem->setText(0, bItem.title);
             childItem->setData(0, Qt::UserRole, bItem.url.toString());
-            childItem->setToolTip(0, QStringLiteral("%1\n%2\nAdded: %3")
-                                         .arg(bItem.title,
-                                              bItem.url.toString(),
-                                              bItem.dateAdded.isValid() ? bItem.dateAdded.toString(QStringLiteral("yyyy-MM-dd HH:mm")) : QString()));
+            childItem->setToolTip(0,
+                                  QStringLiteral("%1\n%2\nAdded: %3")
+                                      .arg(bItem.title,
+                                           bItem.url.toString(),
+                                           bItem.dateAdded.isValid()
+                                               ? bItem.dateAdded.toString(QStringLiteral("yyyy-MM-dd HH:mm"))
+                                               : QString()));
             childItem->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_FileIcon));
 
             if (!filter.isEmpty()) {
                 const bool matches = bItem.title.contains(filter, Qt::CaseInsensitive)
-                                     || docsetName.contains(filter, Qt::CaseInsensitive);
+                                  || docsetName.contains(filter, Qt::CaseInsensitive);
                 childItem->setHidden(!matches);
                 if (matches) {
                     hasVisibleChild = true;
@@ -149,9 +152,8 @@ void BookmarkSidebar::onFilterTextChanged(const QString &text)
         for (int j = 0; j < group->childCount(); ++j) {
             auto *child = group->child(j);
             const QString title = child->text(0);
-            const bool matches = filter.isEmpty()
-                                 || title.contains(filter, Qt::CaseInsensitive)
-                                 || group->text(0).contains(filter, Qt::CaseInsensitive);
+            const bool matches = filter.isEmpty() || title.contains(filter, Qt::CaseInsensitive)
+                              || group->text(0).contains(filter, Qt::CaseInsensitive);
             child->setHidden(!matches);
             if (matches) {
                 hasVisible = true;
@@ -194,11 +196,13 @@ void BookmarkSidebar::showContextMenu(const QPoint &pos)
 
     QMenu menu(this);
     auto *openAction = menu.addAction(QApplication::style()->standardIcon(QStyle::SP_ArrowRight), tr("&Open"));
-    auto *openNewTabAction = menu.addAction(QApplication::style()->standardIcon(QStyle::SP_FileDialogNewFolder), tr("Open in &New Tab"));
+    auto *openNewTabAction = menu.addAction(QApplication::style()->standardIcon(QStyle::SP_FileDialogNewFolder),
+                                            tr("Open in &New Tab"));
     menu.addSeparator();
     auto *copyLinkAction = menu.addAction(tr("&Copy URL"));
     menu.addSeparator();
-    auto *deleteAction = menu.addAction(QApplication::style()->standardIcon(QStyle::SP_TrashIcon), tr("&Delete Bookmark"));
+    auto *deleteAction = menu.addAction(QApplication::style()->standardIcon(QStyle::SP_TrashIcon),
+                                        tr("&Delete Bookmark"));
 
     auto *selected = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
     if (selected == openAction) {

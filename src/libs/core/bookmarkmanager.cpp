@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "bookmarkmanager.h"
+
 #include "application.h"
 #include "httpserver.h"
 
@@ -129,7 +130,8 @@ bool BookmarkManager::addBookmark(const QString &title, const QUrl &url, const Q
     }
 
     if (docset.isEmpty()) {
-        static const QRegularExpression docsetRegex(QStringLiteral("([^/\\\\]+)\\.docset"), QRegularExpression::CaseInsensitiveOption);
+        static const QRegularExpression docsetRegex(QStringLiteral("([^/\\\\]+)\\.docset"),
+                                                    QRegularExpression::CaseInsensitiveOption);
         const auto match = docsetRegex.match(url.toString());
         if (match.hasMatch()) {
             docset = match.captured(1);

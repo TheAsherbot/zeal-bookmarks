@@ -1,101 +1,112 @@
-# Zeal
+# Zeal (with Native Bookmarks & Favorites ⭐)
 
-[![Discord](https://img.shields.io/badge/chat-on%20discord-5865f2?style=flat-square)](https://go.zealdocs.org/l/discord)
-[![Telegram Channel](https://img.shields.io/badge/follow-on%20telegram-179cde?style=flat-square)](https://go.zealdocs.org/l/telegram)
-[![X (Twitter)](https://img.shields.io/badge/follow-on%20x-000000?style=flat-square)](https://go.zealdocs.org/l/x)
+> [!NOTE]
+> **Upstream Project Notice**:
+> This repository is a community fork of the official **[Zeal](https://github.com/zealdocs/zeal)** offline documentation browser created by Oleg Shparber and contributors.
+> - **Official Upstream Repository**: [https://github.com/zealdocs/zeal](https://github.com/zealdocs/zeal)
+> - **Official Website & Docs**: [https://zealdocs.org](https://zealdocs.org)
+>
+> If you are looking for the original, unmodified Zeal application without custom bookmarks, please visit the upstream links above.
 
-[![Release](https://img.shields.io/github/release/zealdocs/zeal?style=flat-square)](https://github.com/zealdocs/zeal/releases)
-[![Build Check](https://img.shields.io/github/actions/workflow/status/zealdocs/zeal/build-check.yaml?style=flat-square)](https://github.com/zealdocs/zeal/actions/workflows/build-check.yaml)
-[![License](https://img.shields.io/github/license/zealdocs/zeal?style=flat-square)](COPYING)
+---
 
-Zeal is an offline documentation browser: your personal reference library, searchable in an instant and available
-without a connection. Originally inspired by [Dash](https://kapeli.com/dash), it supports the same docset format.
+[![GitHub Releases](https://img.shields.io/github/v/release/TheAsherbot/zeal-bookmarks?include_prereleases&style=flat-square&color=success)](https://github.com/TheAsherbot/zeal-bookmarks/releases)
+[![Build Check](https://img.shields.io/github/actions/workflow/status/TheAsherbot/zeal-bookmarks/build-check.yaml?style=flat-square)](https://github.com/TheAsherbot/zeal-bookmarks/actions/workflows/build-check.yaml)
+[![License](https://img.shields.io/github/license/TheAsherbot/zeal-bookmarks?style=flat-square)](COPYING)
 
-<picture>
-  <source media="(prefers-color-scheme: dark)"
-    srcset="https://raw.githubusercontent.com/zealdocs/media/main/screenshots/windows/readme-dark.png">
-  <img alt="Zeal showing instant search results across multiple docsets"
-    src="https://raw.githubusercontent.com/zealdocs/media/main/screenshots/windows/readme-light.png">
-</picture>
+Zeal is an offline documentation browser: your personal reference library, searchable in an instant and available without an internet connection. Originally inspired by [Dash](https://kapeli.com/dash), it supports the standard Apple docset format.
 
-## Download
+---
 
-<a href="https://flathub.org/apps/org.zealdocs.Zeal"><img height="44" alt="Get it on Flathub"
-  src="https://flathub.org/api/badge?svg&amp;locale=en"/></a>
-<a href="https://snapcraft.io/zeal"><img height="44" alt="Get it from the Snap Store"
-  src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg"/></a>
+## 🌟 What's New in This Fork
 
-Binary builds for Windows and other installation options are available on the
-[download page](https://zealdocs.org/download). Windows builds require Windows 10 version 1809 or later.
+This fork implements one of the community's longest-standing feature requests: **Native Bookmarks & Favorites**, built with persistent local storage and dynamic internal port translation.
 
-## How to use
+### Key Features:
+- **Instant Bookmark Shortcut (`Ctrl + D`)**: Bookmark whatever documentation page you are reading with a single keystroke.
+- **Dedicated Bookmarks Sidebar Tab (`⭐ Bookmarks`)**: A clean tabbed panel in the left sidebar alongside the standard Docset index.
+  - **Auto-grouped by Docset**: Bookmarks are automatically organized into folders by docset name (e.g. `DirectX 12`, `Win32`, `Python`, `C++`).
+  - **Live Search / Filter**: Instant real-time filtering across bookmark titles and docset categories.
+  - **Full Context Menu**: Right-click any bookmark to **Open**, **Open in New Tab**, **Copy URL**, or **Delete**.
+- **Top Menu Bar (`&Bookmarks`)**: Access, jump to, and browse your bookmarks from the main application menu bar anytime (`Ctrl + Shift + B` toggles the tab).
+- **Dynamic Port Translation**: Zeal's internal documentation HTTP server binds to a random port on each launch (e.g. `:62944` on run 1, `:51234` on run 2). This fork automatically resolves stored bookmark URLs to the live server port so saved bookmarks **never 404 on app restarts**.
+- **Universal Compatibility**: Works seamlessly with both prebuilt official docsets and custom local docsets (such as Win32, DirectX 12, or custom engine documentation).
+
+---
+
+## 🚀 Download & Installation
+
+Precompiled binaries for Windows and Linux are available under **[GitHub Releases](https://github.com/TheAsherbot/zeal-bookmarks/releases)**:
+
+- **Windows Installer (`.msi`)**: Full Windows setup that registers Zeal in your Start Menu and Programs list.
+- **Windows Portable (`.zip`)**: Standalone archive—extract anywhere and run `zeal.exe`.
+- **Linux AppImage (`.AppImage`)**: Self-contained executable for Ubuntu, Debian, Fedora, Arch, and other distributions.
+
+### Quick Install from Source (Windows):
+If building locally from source:
+1. Run `install_to_program_files.bat` as Administrator.
+2. The script will automatically uninstall any previous stock Zeal installation, deploy the custom release into `C:\Program Files\Zeal\`, create Start Menu and Desktop shortcuts, and register Zeal in Windows App Paths so you can run `zeal` from `Win + R` or PowerShell.
+
+---
+
+## 📖 How to Use Bookmarks
+
+1. **Add a Bookmark**: Open any documentation article and press **`Ctrl + D`** (or click `Bookmarks → Bookmark Current Page`).
+2. **Switch to Bookmarks**: Click the **Bookmarks** tab in the sidebar or press **`Ctrl + Shift + B`**.
+3. **Filter**: Type in the search box at the top of the sidebar to filter your bookmarks in real time.
+4. **Open in New Tab**: Right-click any bookmark and choose **Open in New Tab** (or middle-click).
+5. **Delete**: Right-click any bookmark and choose **Delete Bookmark**.
+
+---
+
+## 🔍 How to Use Docsets (Standard Zeal Features)
 
 After installing Zeal, go to `File → Docset Library`, select the docsets you want, and click the `Download` button.
 
 ### Query and filter docsets
-
 Limit the search scope by prefixing your query with a docset name and a colon:
-
-`cpp:vector`
-
+```text
+cpp:vector
+```
 To search multiple docsets, separate them with a comma:
-
-`python,django:string`
-
-### Command line
-
-You can also start Zeal with a query from the command line:
-
-`zeal python:pprint`
-
-## How to compile
-
-Detailed, up-to-date build instructions for each platform are available in the
-[wiki](https://github.com/zealdocs/zeal/wiki). The bare minimum is described below.
-
-### Build dependencies
-
-* [CMake](https://cmake.org/) and [Ninja](https://ninja-build.org/).
-* [Qt](https://www.qt.io/) version 6.4.2 or later. Required modules besides Qt Base: Svg, WebEngine.
-* [libarchive](https://libarchive.org/).
-* [SQLite](https://sqlite.org/) version 3.31.0 or later.
-* [zlib](https://zlib.net/).
-* Linux/BSD platforms: `extra-cmake-modules`.
-* X11 platforms only: `libxkbcommon`, `xcb-util-keysyms`.
-
-### Build instructions
-
-```shell
-cmake --preset release
-cmake --build --preset release
+```text
+python,django:string
 ```
 
-The resulting binary is `build/release/zeal` (`zeal.exe` on Windows).
+### Command line
+You can also launch Zeal with a query directly from the terminal or Run prompt:
+```bash
+zeal python:pprint
+zeal win32:CreateFile
+```
 
-## Create your own docsets
+---
 
-Follow the instructions in the [Dash docset generation guide](https://kapeli.com/docsets).
+## 🛠️ How to Compile
 
-## Contributing
+### Build dependencies
+* [CMake](https://cmake.org/) and [Ninja](https://ninja-build.org/).
+* [Qt](https://www.qt.io/) version 6.4.2 or later (modules: Core, Gui, Widgets, Network, Svg, WebEngineCore, WebEngineWidgets, WebChannel).
+* [libarchive](https://libarchive.org/).
+* [sqlite3](https://sqlite.org/).
+* [tomlplusplus](https://marzer.github.io/tomlplusplus/).
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build Zeal, the conventions to follow,
-and what to expect from review.
+### Windows Build (MSVC + Ninja + vcpkg):
+```powershell
+# 1. Configure
+cmake -B build -S . -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="<vcpkg_root>/scripts/buildsystems/vcpkg.cmake" -DCMAKE_PREFIX_PATH="<qt6_install_prefix>"
 
-## Contact and support
+# 2. Build
+cmake --build build --config Release
 
-Ways to get help or reach the developers:
+# 3. Deploy Qt runtime DLLs
+windeployqt --release build/zeal.exe
+```
 
-* Report bugs and submit feature requests to [GitHub issues](https://github.com/zealdocs/zeal/issues).
-* Ask questions in [GitHub discussions](https://github.com/zealdocs/zeal/discussions).
-* Chat with the developers and other Zeal users on [Discord](https://go.zealdocs.org/l/discord).
-* Subscribe to the [Telegram channel](https://go.zealdocs.org/l/telegram) for announcements.
-* Follow [@zealdocs](https://go.zealdocs.org/l/x) on X for news and updates.
-* Email <support@zealdocs.org> for anything private or sensitive.
+---
 
-## License
+## 📜 Credits & License
 
-This software is licensed under the terms of the GNU General Public License version 3 (GPLv3) or later. Full text of
-the license is available in the [COPYING](COPYING) file and [online](https://www.gnu.org/licenses/gpl-3.0.html).
-
-Bundled third-party components are licensed under their respective terms; the repository is
-[REUSE](https://reuse.software/)-compliant, with all license texts available in the [LICENSES](LICENSES) directory.
+- **Original Zeal Author**: [Oleg Shparber](https://github.com/trollixx) and the [Zeal Contributors](https://github.com/zealdocs/zeal/graphs/contributors).
+- **Bookmarks & Favorites Implementation**: [Asher Jordan](https://github.com/TheAsherbot).
+- **License**: GNU General Public License v3.0 or later ([COPYING](COPYING)).

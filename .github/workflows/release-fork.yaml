@@ -1,0 +1,160 @@
+name: Release Builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v0.9.2-bookmarks)'
+        required: true
+        default: 'v0.9.2-bookmarks'
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  QT_VERSION: "6.11.3"
+  QT_MODULES: >-
+    qtpositioning
+    qttasktree
+    qtwebchannel
+    qtwebengine
+
+jobs:
+  build-windows:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: Windows x64 Portable
+            os: windows-2022
+            configurePreset: release-portable
+            buildPreset: release-portable
+          - name: Windows x64 Installer
+            os: windows-2022
+            configurePreset: release
+            buildPreset: release
+
+    env:
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect compiler version
+        id: compiler-version
+        shell: pwsh
+        run: |
+          $msvc = Get-ChildItem "C:\Program Files*\Microsoft Visual Studio\*\*\VC\Tools\MSVC\*" -Directory | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
+          "version=$($msvc.Name)" >> $env:GITHUB_OUTPUT
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.vcpkg-cache
+          key: vcpkg-${{ matrix.config.os }}-${{ matrix.config.buildPreset }}-${{ steps.compiler-version.outputs.version }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-${{ matrix.config.os }}-${{ matrix.config.buildPreset }}-${{ steps.compiler-version.outputs.version }}-
+
+      - name: Prepare vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: ${{ github.workspace }}/.vcpkg
+
+      - name: Install Qt
+        uses: trollixx/setup-qt@v1
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+
+      - name: Configure & Build
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.config.configurePreset }}
+          buildPreset: ${{ matrix.config.buildPreset }}
+          configurePresetAdditionalArgs: "['-DVCPKG_INSTALL_OPTIONS=--x-abi-tools-use-exact-versions']"
+
+      - name: Install WiX
+        if: matrix.config.configurePreset == 'release'
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add --global WixToolset.UI.wixext/5.0.2
+          wix extension add --global WixToolset.Util.wixext/5.0.2
+
+      - name: Package
+        run: cmake --build --preset ${{ matrix.config.buildPreset }} --target package
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-${{ matrix.config.buildPreset }}
+          path: build/${{ matrix.config.configurePreset }}/zeal-*.*
+          if-no-files-found: ignore
+
+  build-appimage:
+    name: Linux AppImage
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get -y -qq update
+          sudo apt-get -y -qq --no-install-recommends install \
+            cmake extra-cmake-modules libarchive-dev libsqlite3-dev libvulkan-dev \
+            libxcb-keysyms1-dev libxkbcommon-dev ninja-build \
+            libgl-dev libqt6opengl6-dev libqt6svg6-dev qt6-webengine-dev
+
+      - name: Configure & Build AppImage
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: release-appimage
+          buildPreset: release-appimage
+          buildPresetAdditionalArgs: "['--target appimage']"
+
+      - name: Upload AppImage Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-appimage
+          path: build/release-appimage/*.AppImage*
+          if-no-files-found: ignore
+
+  publish-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-appimage]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all built artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: release-files
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: Zeal with Bookmarks (${{ github.event.inputs.tag_name || github.ref_name }})
+          body: |
+            ## Zeal with Native Bookmarks & Favorites ⭐
+
+            This release includes pre-built binaries for **Windows** and **Linux** with full support for:
+            - **`Ctrl + D`**: Instant page bookmarking
+            - **`Ctrl + Shift + B`**: Dedicated Bookmarks sidebar tab
+            - **Bookmarks Menu**: Top-level menu with docset categorization
+            - **Dynamic Port Translation**: Automatically fixes Zeal's internal HTTP server port changes across sessions
+
+            ### Included Binaries:
+            - Windows Installer (`.msi`)
+            - Windows Portable (`.zip`)
+            - Linux AppImage (`.AppImage`)
+          files: release-files/*
