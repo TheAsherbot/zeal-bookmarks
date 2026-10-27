@@ -110,22 +110,56 @@ jobs:
         run: |
           sudo apt-get -y -qq update
           sudo apt-get -y -qq --no-install-recommends install \
-            cmake extra-cmake-modules libarchive-dev libsqlite3-dev libvulkan-dev \
-            libxcb-keysyms1-dev libxkbcommon-dev ninja-build \
-            libgl-dev libqt6opengl6-dev libqt6svg6-dev qt6-webengine-dev
+            appstream cmake extra-cmake-modules libarchive-dev libfuse2t64 \
+            libgl-dev libqt6opengl6-dev libqt6svg6-dev libsqlite3-dev \
+            libvulkan-dev libxcb-keysyms1-dev libxkbcommon-dev ninja-build \
+            qt6-wayland qt6-webengine-dev
 
-      - name: Configure & Build AppImage
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: release-appimage
-          buildPreset: release-appimage
-          buildPresetAdditionalArgs: "['--target appimage']"
+      - name: Install linuxdeploy
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-appimage-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
 
-      - name: Upload AppImage Artifact
+      - name: Configure & Build
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build
+
+      - name: Retrieve Application Version
+        run: |
+          zeal_version=$(<build/zeal_version)
+          echo "Zeal Version: ${zeal_version}"
+          echo "ZEAL_VERSION=${zeal_version}" >> $GITHUB_ENV
+
+      - name: Prepare AppDir
+        run: DESTDIR=${{ github.workspace }}/AppDir cmake --install build
+
+      - name: Validate AppStream Metadata
+        run: appstreamcli validate AppDir/usr/share/metainfo/org.zealdocs.zeal.appdata.xml
+
+      - name: Set Up AppRun Hooks
+        run: |
+          mkdir -p AppDir/apprun-hooks
+          echo 'export QTWEBENGINE_DISABLE_SANDBOX=1' > AppDir/apprun-hooks/qtwebengine.sh
+
+      - name: Build AppImage
+        run: |
+          export QMAKE=$(which qmake6)
+          export OUTPUT=Zeal-${{ env.ZEAL_VERSION }}-x86_64.AppImage
+          export EXTRA_PLATFORM_PLUGINS="libqwayland-egl.so;libqwayland-generic.so"
+          export EXTRA_QT_MODULES=waylandcompositor
+          export LINUXDEPLOY_EXCLUDED_LIBRARIES="libssl.so*;libcrypto.so*"
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt
+          rm -f AppDir/usr/lib/libssl.so* AppDir/usr/lib/libcrypto.so*
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+
+      - name: Upload AppImage
         uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
-          path: build/release-appimage/*.AppImage*
+          path: Zeal-${{ env.ZEAL_VERSION }}-x86_64.AppImage
           if-no-files-found: ignore
 
   publish-release:

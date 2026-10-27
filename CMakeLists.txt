@@ -29,7 +29,7 @@ project(Zeal
     LANGUAGES CXX
 )
 
-set(ZEAL_RELEASE_VERSION "0.9.1") # x-version
+set(ZEAL_RELEASE_VERSION "0.9.2") # x-version
 
 include(ZealHelpers)
 
@@ -73,7 +73,8 @@ if(PROJECT_VERSION STREQUAL ZEAL_RELEASE_VERSION)
 else()
     include(GitVersionInfo)
     if(Zeal_GIT_AT_TAG)
-        message(FATAL_ERROR "Tagged commit but PROJECT_VERSION (${PROJECT_VERSION}) != ZEAL_RELEASE_VERSION (${ZEAL_RELEASE_VERSION}).")
+        message(NOTICE "Tagged commit: ${PROJECT_VERSION}")
+        set(ZEAL_VERSION_SUFFIX "")
     elseif(Zeal_GIT_VERSION_AHEAD)
         set(ZEAL_VERSION_SUFFIX "-dev.${Zeal_GIT_VERSION_AHEAD}")
     else()
